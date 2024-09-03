@@ -1,0 +1,522 @@
+---
+title: "Xt Prueba parte 2"
+author: "Francisco Flor"
+date: "2024-03-18"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+# Librerias
+
+```{r setup, include=FALSE}
+library(sampleSelection)
+library(openxlsx)
+library(tidyverse)
+library(ggplot2)
+library(RColorBrewer)
+library(DataExplorer)
+library(stringr)
+library(readxl)
+library(dplyr)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Lectura de base de datos
+
+```{r, include=FALSE}
+
+Telco_Customer_tvc <- read_excel("C:/Users/PAOLA/Desktop/PRUEBA MARKUP/prueba xtrim/Telco-Customer-tvc.xlsx")
+
+View(Telco_Customer_tvc)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pregunta 1.
+
+De los clientes que tienen internet, ¿Cuál es el promedio del importe total cargado al cliente (TotalCharges)? Separar la respuesta por el tipo de servicio de internet que se dispone (DSL, Fiber optic)
+
+```{r, include=TRUE}
+
+# Filtrar los clientes que tienen servicio de internet
+clientes_con_internet <- Telco_Customer_tvc %>%
+  filter(InternetService != "No") 
+
+# Calcular el promedio del importe total cargado al cliente, separando por tipo de servicio de internet
+promedio_por_tipo_internet <- clientes_con_internet %>%
+  group_by(InternetService) %>%
+  summarise(Promedio_Total_Cargado = mean(TotalCharges, na.rm = TRUE))
+
+# Imprimir los resultados
+print(promedio_por_tipo_internet)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pregunta 2
+
+Calcule un estadístico descriptivo adecuado que permita obtener un hallazgo de la variable Total de facturación (TotalCharges) de los clientes que han desertado (CHURN)
+
+```{r, include=TRUE}
+
+# Filtrar los clientes que han desertado
+clientes_desertados <- Telco_Customer_tvc %>%
+  filter(Churn == "Yes")
+
+count(clientes_desertados)
+
+
+# Calcular estadísticas descriptivas de la variable TotalCharges para los clientes que han desertado
+estadisticas_descriptivas <- summary(clientes_desertados$TotalCharges)
+
+# Imprimir los resultados
+print(estadisticas_descriptivas)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Comentarios
+
+Aqui podemos ver como puntos más importantes la media (1531.80) y la mediana ( 703.55) del total de facturacion de los clientes que han desertado. Asi como tambien el número de personas (1869) que han desertado de los servicios.
+
+# Pregunta 3
+
+¿Cuáles son las formas de pago de los clientes actuales de la compañía TVC?
+
+```{r, include=TRUE}
+# Filtrar los clientes que aún son activos (no han desertado)
+clientes_activos <- Telco_Customer_tvc %>%
+  filter(Churn == "No")
+
+# Obtener las formas de pago únicas de los clientes activos
+formas_de_pago <- unique(clientes_activos$PaymentMethod)
+
+# Imprimir las formas de pago
+print(formas_de_pago)
+
+
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Comentarios
+
+Actualmente existen 4 diferentes formas de pago en como realizan los clientes sus repectivos pagos: Electronic check","Mailed check", "Bank transfer", "Credit card".
+
+# Pregunta 4
+
+¿Cuál es el porcentaje de clientes que desertaron teniendo algún servicio de Streaming TV?
+
+```{r, include=TRUE}
+
+# Filtrar los clientes que han desertado
+clientes_desertados <- Telco_Customer_tvc %>%
+  filter(Churn == "Yes")
+
+# Filtrar clientes desertados que tienen servicio de StreamingTV
+clientes_desertados_con_streamingtv <- clientes_desertados %>%
+  filter(StreamingTV == "Yes")
+
+count(clientes_desertados_con_streamingtv)
+
+# Calcular el porcentaje de clientes que desertaron teniendo algún servicio de Streaming TV
+porcentaje_desertados_con_streamingTV <- clientes_desertados %>%
+  filter(StreamingTV == "Yes") %>%
+  nrow() / nrow(clientes_desertados) * 100
+
+# Imprimir el porcentaje
+print(porcentaje_desertados_con_streamingTV)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Pero si tambien consideramos el servicio de streaming movies los datos cambian.
+
+```{r, include=TRUE}
+
+# Filtrar clientes desertados que tenían servicio de StreamingTV o StreamingMovies
+clientes_desertados_con_streaming <- clientes_desertados %>%
+  filter(StreamingTV == "Yes" | StreamingMovies == "Yes")
+
+# Imprimir el número de clientes desertados con servicio de StreamingTV o StreamingMovies
+print(nrow(clientes_desertados_con_streaming))
+
+# Calcular el porcentaje de desertores con servicio de StreamingTV o StreamingMovies
+porcentaje_desertados_con_streaming <- (nrow(clientes_desertados_con_streaming) / nrow(clientes_desertados)) * 100
+
+# Imprimir el porcentaje
+print(porcentaje_desertados_con_streaming)
+
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Comentarios
+
+Tenemos como informacion el numero de clientes que han desertado que poseian streaming tv es 814, lo que nos da un total de 43.55% de los clientes desertores.
+
+Pero si a esto le sumamos los que tenian Streaming tv o Streaming Movie el número es 1061 con una representacion del 56.76%.
+
+# Pregunta 5
+
+## ¿Cuáles son las variables dicotómicas presentes en el conjunto de datos?
+
+Esta pregunta no es necesario utilizar R. Las variables dicotomicas son aquellas que pueden tomar dos valores. Normalmente se utiliza si/no o 1/0. En la base de datos utilizadas las variables dicotomicas son: SeniorCitizen, Partner, Dependents, PhoneService,PaperlessBilling, Churn.
+
+Mientras que estas podrian serlo si se modifica algunos caracteres utilizados. MultipleLines,InternetService, OnlineSecurity, OnlineBackup, DeviceProtection, TechSupport, StreamingTV, StreamingMovies pues tienen una tercera opcion que bien es "No phone service" o "No internet service"
+
+# Pregunta 6
+
+Realice un gráfico que permita analizar la correlación entre la variable "Churn" y "Contract".
+
+```{r, include=TRUE}
+
+# Crear un resumen de los datos
+resumen_contrato_churn <- Telco_Customer_tvc %>%
+  group_by(Contract, Churn) %>%
+  summarise(Num_Clientes = n()) %>%
+  mutate(Proporcion = Num_Clientes / sum(Num_Clientes))
+
+# Crear el gráfico de barras apiladas
+ggplot(resumen_contrato_churn, aes(x = Contract, y = Proporcion, fill = Churn)) + geom_bar(stat = "identity") + labs(title = "Deserción por Tipo de Contrato",
+       x = "Tipo de Contrato",
+       y = "Proporción de Clientes",
+       fill = "Estado de Deserción")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Comentarios
+
+Viendo el grafico me indica que los contratos de month to month tienen una desercion considerable, podria ser considerable debido al tipo de contrato donde le da mayor flexibilidad a los clientes. Por otra partes a los de renovacion por año y cada dos años su propocion es mucho menor esto podria ser el compromiso que ya tienen adquirido
+
+# Pregunta 7
+
+Mostrar el top ten de clientes activos a cuidar para evitar una posible deserción. (Bajo su propio criterio de análisis)
+
+# Aclaracion
+
+Viendo el porcentaje de deserciones en los contratos mes a mes, les daria una mayor valoracion al riesgo.
+
+```{r, include=TRUE}
+
+# Calcular el CLV para cada cliente activo con contrato de mes a mes
+clientes_activos_con_CLV <- Telco_Customer_tvc %>%
+  filter(Churn == "0", Contract == "Month-to-month") %>%
+  mutate(
+    CLV = MonthlyCharges * tenure
+  )
+
+# Seleccionar los diez clientes activos con el CLV más alto
+top_ten_clientes_CLV <- clientes_activos_con_CLV %>%
+  top_n(10, CLV)
+
+# Imprimir el top ten de clientes activos con mayor CLV y contrato de mes a mes
+print(top_ten_clientes_CLV)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pregunta 8
+
+Mostrar la participación de clientes por los diferentes servicios que la empresa ofrece.
+
+Informacion que debemos tener presente para saber los clientes activos y los desertados.
+
+```{r}
+# Filtrar clientes activos
+clientes_activos <- Telco_Customer_tvc %>%
+  filter(Churn == "No")
+
+# Filtrar clientes que han desertado
+clientes_desertados <- Telco_Customer_tvc %>%
+  filter(Churn == "Yes")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Calcular la participación de clientes por servicio para clientes activos
+
+# Servicio de Telefono
+
+```{r, include=TRUE}
+
+# Calcular la participación de clientes activos por tipo de servicio de Telefono
+participacion_clientes_telefono <- clientes_activos %>%
+  group_by(PhoneService) %>%
+  summarise(TotalClientes = n(),
+            Representacion = TotalClientes / nrow(clientes_activos) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de Teléfono
+print(participacion_clientes_telefono)
+
+ggplot(participacion_clientes_telefono, aes(x = "", y = Representacion, fill = PhoneService)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos en Servicio de telefono",
+       fill = "Servicio de Telefono") +
+  theme_void() +
+  theme(legend.position = "right")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Multiple Lines
+
+```{r, include=TRUE}
+
+# Calcular la participación de clientes activos por tipo de servicio de ML
+participacion_clientes_ML <- clientes_activos %>%
+  group_by(MultipleLines) %>%
+  summarise(TotalClientes = n(),
+            Representacion = TotalClientes / nrow(clientes_activos) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de ML
+print(participacion_clientes_ML)
+
+# Crear el gráfico ML
+
+ggplot(participacion_clientes_ML, aes(x = "", y = Representacion, fill = MultipleLines)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos en ML",
+       fill = "Servicio de ML") +
+  theme_void() +
+  theme(legend.position = "right")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Servicio de Internet
+
+```{r, include=TRUE}
+
+
+# Filtrar clientes activos que tienen servicio de Internet
+clientes_activos_internet <- clientes_activos %>%
+  filter(InternetService != "No")
+
+# Calcular la participación de clientes activos por tipo de servicio de Internet
+participacion_clientes_internet <- clientes_activos_internet %>%
+  group_by(InternetService) %>%
+  summarise(TotalClientes = n(),
+            Representacion = n() / nrow(clientes_activos_internet) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de Internet
+print(participacion_clientes_internet)
+
+# Crear el gráfico Internet
+ggplot(participacion_clientes_internet, aes(x = "", y = Representacion, fill = InternetService)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos por Tipo de Servicio de Internet",
+       fill = "Tipo de Servicio de Internet") +
+  theme_void() +
+  theme(legend.position = "right")
+
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Servicio de OnlineSecurity
+
+```{r, include=TRUE}
+
+# Calcular la participación de clientes activos por tipo de servicio de OS
+participacion_clientes_OS <- clientes_activos %>%
+  group_by(OnlineSecurity) %>%
+  summarise(TotalClientes = n(),
+            Representacion = TotalClientes / nrow(clientes_activos) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de OS
+print(participacion_clientes_OS)
+
+# Crear el gráfico OS
+
+ggplot(participacion_clientes_OS, aes(x = "", y = Representacion, fill = OnlineSecurity)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos en os",
+       fill = "Servicio de os") +
+  theme_void() +
+  theme(legend.position = "right")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Servicio de OnlineBackup
+
+```{r, include=TRUE}
+
+
+# Calcular la participación de clientes activos por tipo de servicio de OB
+participacion_clientes_OB <- clientes_activos %>%
+  group_by(OnlineBackup) %>%
+  summarise(TotalClientes = n(),
+            Representacion = TotalClientes / nrow(clientes_activos) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de OB
+print(participacion_clientes_OB)
+
+# Crear el gráfico OB
+
+ggplot(participacion_clientes_OB, aes(x = "", y = Representacion, fill = OnlineBackup)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos en OB",
+       fill = "Servicio de OB") +
+  theme_void() +
+  theme(legend.position = "right")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Servicio de DeviceProtection
+
+```{r, include=TRUE}
+
+# Calcular la participación de clientes activos por tipo de servicio de DP
+participacion_clientes_DP <- clientes_activos %>%
+  group_by(DeviceProtection) %>%
+  summarise(TotalClientes = n(),
+            Representacion = TotalClientes / nrow(clientes_activos) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de DP
+print(participacion_clientes_DP)
+
+# Crear el gráfico DP
+
+ggplot(participacion_clientes_DP, aes(x = "", y = Representacion, fill = DeviceProtection)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos en DP",
+       fill = "Servicio de DP") +
+  theme_void() +
+  theme(legend.position = "right")
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Servicio de TechSupport
+
+```{r, include=TRUE}
+
+# Calcular la participación de clientes activos por tipo de servicio de TS
+participacion_clientes_TS <- clientes_activos %>%
+  group_by(TechSupport) %>%
+  summarise(TotalClientes = n(),
+            Representacion = TotalClientes / nrow(clientes_activos) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de TS
+print(participacion_clientes_TS)
+
+# Crear el gráfico TS
+
+ggplot(participacion_clientes_TS, aes(x = "", y = Representacion, fill = TechSupport)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos en TS",
+       fill = "Servicio de TS") +
+  theme_void() +
+  theme(legend.position = "right")
+
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Servicio de StreamingTV
+
+```{r, include=TRUE}
+
+# Calcular la participación de clientes activos por tipo de servicio de STV
+participacion_clientes_STV <- clientes_activos %>%
+  group_by(StreamingTV) %>%
+  summarise(TotalClientes = n(),
+            Representacion = TotalClientes / nrow(clientes_activos) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de STV
+print(participacion_clientes_STV)
+
+# Crear el gráfico STV
+
+ggplot(participacion_clientes_STV, aes(x = "", y = Representacion, fill = StreamingTV)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos en STV",
+       fill = "Servicio de STV") +
+  theme_void() +
+  theme(legend.position = "right")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Servicio de StreamingMovies
+
+```{r, include=TRUE}
+
+
+# Calcular la participación de clientes activos por tipo de servicio de SMOV
+participacion_clientes_SMOV <- clientes_activos %>%
+  group_by(StreamingMovies) %>%
+  summarise(TotalClientes = n(),
+            Representacion = TotalClientes / nrow(clientes_activos) * 100)
+
+# Imprimir la participación de clientes activos por tipo de servicio de SMOV
+print(participacion_clientes_SMOV)
+
+# Crear el gráfico SMOV
+
+ggplot(participacion_clientes_SMOV, aes(x = "", y = Representacion, fill = StreamingMovies)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(aes(label = paste0(round(Representacion), "%")), position = position_stack(vjust = 0.5)) +  # Agregar porcentajes
+  coord_polar("y", start = 0) +
+  labs(title = "Participación de Clientes Activos en STV",
+       fill = "Servicio de STV") +
+  theme_void() +
+  theme(legend.position = "right")
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Pregunta 9
+
+¿Cuáles son los clientes que desertaron?
+
+```{r, include=TRUE}
+
+# Filtrar clientes que han desertado
+clientes_desertados <- Telco_Customer_tvc %>%
+  filter(Churn == "Yes")
+
+print(clientes_desertados)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pregunta 10
+
+¿Cuántos clientes están activos?
+
+```{r, include=TRUE}
+
+clientes_activos <- Telco_Customer_tvc %>%
+  filter(Churn == "No")
+
+count(clientes_activos)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
